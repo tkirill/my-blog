@@ -2,4 +2,5 @@ syntax: globe
 
 *~
 *.pyc
+*.pid
 output/
