@@ -4,3 +4,4 @@ syntax: globe
 *.pyc
 *.pid
 output/
+/apps/binomial/binomial
