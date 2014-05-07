@@ -8,19 +8,17 @@ Summary: Случай из жизни, когда Search with Pattern из ReSha
 
 Например, пусть раньше в тестах для сравнения строк без учёта регистра использовался StringAssert:
 
-```cs
-StringAssert.AreEqualIgnoringCase("2013.1.1", new DateTime(2013, 1, 1).ToString("yyyy.M.d"));
-//...
-StringAssert.AreEqualIgnoringCase("AA"+"bb", string.Concat("aa", "BB"));
-```
+    :::csharp
+    StringAssert.AreEqualIgnoringCase("2013.1.1", new DateTime(2013, 1, 1).ToString("yyyy.M.d"));
+    //...
+    StringAssert.AreEqualIgnoringCase("AA"+"bb", string.Concat("aa", "BB"));
 
 То есть, в качестве первого и второго аргументов могут передаваться произвольные выражения, а не только строковые литералы.  Теперь представим, что в проекте поменялись соглашения и теперь все проверки принято записывать через Assert.That.  Наш пример в новых соглашениях будет выглядеть так:
 
-```cs
-Assert.That(new DateTime(2013, 1, 1).ToString("yyyy.M.d"), Is.EqualTo("2013.1.1").IgnoreCase);
-//...
-Assert.That(string.Concat("aa", "BB"), Is.EqualTo("AA" + "bb").IgnoreCase);
-```
+    :::csharp
+    Assert.That(new DateTime(2013, 1, 1).ToString("yyyy.M.d"), Is.EqualTo("2013.1.1").IgnoreCase);
+    //...
+    Assert.That(string.Concat("aa", "BB"), Is.EqualTo("AA" + "bb").IgnoreCase);
 
 Мы можем использовать структурный поиск для замены старого способа записи на новый.  Выбрав пункт меню ReSharper -> Find -> Search with Pattern и нажав в открывшемся окне на Replace в верхнем правом углу мы приступаем к написанию шаблона.
 
@@ -28,15 +26,13 @@ Assert.That(string.Concat("aa", "BB"), Is.EqualTo("AA" + "bb").IgnoreCase);
 
 Шаблон для поиска:
 
-```cs
-StringAssert.AreEqualIgnoringCase($expected$, $actual$);
-```
+    :::text
+    StringAssert.AreEqualIgnoringCase($expected$, $actual$);
 
 Шаблон для замены:
 
-```cs
-Assert.That($actual$, Is.EqualTo($expected$).IgnoreCase);
-```
+    :::text
+    Assert.That($actual$, Is.EqualTo($expected$).IgnoreCase);
 
 expected и actual обозначают аргументы, мы задаём это явно в настройках placeholder:
 

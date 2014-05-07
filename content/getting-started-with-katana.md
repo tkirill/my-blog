@@ -15,9 +15,8 @@ Summary: Перевод статьи о Katana project от руководите
 
 Проект Katana на самом деле были начат не в Microsoft, а в open-source проекте Open Web Interface for .NET (OWIN), спецификации, которая определяет взаимодействие между веб-сервером и компонентами приложения (см. [owin.org](http://owin.org)).  Так как цель спецификации – стимулировать обширную и живую экосистему .NET-серверов и программных компонентов, то всё взаимодействие между сервером и приложением сводится к небольшому набору типов и единственной функции, известной как application delegate, или AppFunc:
 
-```cs
-using AppFunc = Func<IDictionary<string, object>, Task>;
-```
+    :::csharp
+    using AppFunc = Func<IDictionary<string, object>, Task>;
 
 Каждый компонент OWIN-приложения предоставляет серверу application delegate.  Затем компоненты сцепляются вместе в конвеер, в который OWIN-сервер посылает запросы.  Все компоненты в конвеере должны быть асинхронными, чтобы эффективно использовать ресурсы, и это отражено в application delegate, возвращающим Task.
 
@@ -107,51 +106,49 @@ Application
 
 Затем мне нужно создать модуль Nancy (похож на контроллер из Model-View-Controller, или MVC) для обработки запросов, а также view для отображения чего-нибудь в браузере.  Вот код модуля (HomeModule.cs):
 
-```cs
-public class HomeModule : NancyModule
-{
-  public HomeModule() {
-    Get["/"] = _ => {
-      var model = new { title = "We've Got Issues..." };
-      return View["home", model];
-    };
-  }
-}
-```
+    :::csharp
+    public class HomeModule : NancyModule
+    {
+      public HomeModule() {
+        Get["/"] = _ => {
+          var model = new { title = "We've Got Issues..." };
+          return View["home", model];
+        };
+      }
+    }
 
 Как вы можете видеть, модуль говорит, что запросы на корень приложения ("/") должны быть обработаны анонимным делегатом, определённым в соответствующей лямбде.  Эта функция создаёт модель с заголовком страницы и говорит Nancy отрендерить view "home", передавая в неё модель. View, показанная ниже, вставляет заголовок из модели и в заголовок страницы, и в тег h1:
 
-```xml
-<!DOCTYPE html>
-<html >
-<head>
-  <title>@Model.title</title>
-</head>
-  <body>
-    <header>
-      <h1>@Model.title</h1>   
-    </header>
-    <section>
-      <h2>Backlog</h2>
-      <ul class="bugs" id="backlog">
-        <li>a bug</li>
-      </ul>
-    </section>
-    <section>
-      <h2>Working</h2>
-      <ul class="bugs" id="working">
-        <li>a bug</li>
-      </ul>
-    </section>
-    <section>
-      <h2>Done</h2>
-      <ul class="bugs" id="done">
-        <li>a bug</li>
-      </ul>
-    </section>
-  </body>
-</html>
-```
+    :::html
+    <!DOCTYPE html>
+    <html >
+    <head>
+      <title>@Model.title</title>
+    </head>
+      <body>
+        <header>
+          <h1>@Model.title</h1>   
+        </header>
+        <section>
+          <h2>Backlog</h2>
+          <ul class="bugs" id="backlog">
+            <li>a bug</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Working</h2>
+          <ul class="bugs" id="working">
+            <li>a bug</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Done</h2>
+          <ul class="bugs" id="done">
+            <li>a bug</li>
+          </ul>
+        </section>
+      </body>
+    </html>
 
 За более подробной информацией об этих листингах загляните, пожалуйста, в документацию Nancy.
 
@@ -169,15 +166,14 @@ public class HomeModule : NancyModule
 
 Я создам startup class, который будет инициализировать мой OWIN-конвеер и добавлять Nancy как компонент конвеера.  Я создаю новый класс Startup и добавляю конфигурационный метод следующим образом:
 
-```cs
-public class Startup
-{
-  public void Configuration(IAppBuilder app)
-  {
-    app.UseNancy();
-  }
-}
-```
+    :::csharp
+    public class Startup
+    {
+      public void Configuration(IAppBuilder app)
+      {
+        app.UseNancy();
+      }
+    }
 
 UseNancy -- это extension method, доступный из NuGet-пакета Nancy.Owin.  Многие библиотеки middleware предоставляют похожие удобные extension methods, упрощающие процесс настройки, но вам никто не запрещает добавлять middleware с помощью метода Use у IAppBuilder.
 
@@ -192,48 +188,50 @@ UseNancy -- это extension method, доступный из NuGet-пакета 
 
 Я начну с разработки API на фреймворке ASP.NET Web API.  Как обычно, первым делом нужно установить NuGet-пакет.  Пакет этот называется Microsoft.AspNet.WebApi.Owin ([bit.ly/1dnocmK](http://bit.ly/1dnocmK)) и он позволит легко встроить ASP.NET Web API в мой OWIN-конвеер.  Фреймворк ASP.NET Web API установится как зависимость.  После установки, я создам простое API:
 
-```cs
-public class BugsController : ApiController
-{
-  IBugsRepository _bugsRepository = new BugsRepository();
-  public IEnumerable<Bug> Get()
-  {
-    return _bugsRepository.GetBugs();
-  }
-  [HttpPost("api/bugs/backlog")]
-  public Bug MoveToBacklog([FromBody] int id)
-  {
-    var bug = _bugsRepository.GetBugs().First(b=>b.id==id);
-    bug.state = "backlog";
-    return bug;
-  }
-  [HttpPost("api/bugs/working")]
-  public Bug MoveToWorking([FromBody] int id)
-  {
-    var bug = _bugsRepository.GetBugs().First(b => b.id == id);
-    bug.state = "working";
-    return bug;
-  }
-  [HttpPost("api/bugs/done")]
-  public Bug MoveToDone([FromBody] int id)
-  {
-    var bug = _bugsRepository.GetBugs().First(b => b.id == id);
-    bug.state = "done";
-    return bug;
-  }
-}
-```
+    :::csharp
+    public class BugsController : ApiController
+    {
+      IBugsRepository _bugsRepository = new BugsRepository();
+
+      public IEnumerable<Bug> Get()
+      {
+        return _bugsRepository.GetBugs();
+      }
+
+      [HttpPost("api/bugs/backlog")]
+      public Bug MoveToBacklog([FromBody] int id)
+      {
+        var bug = _bugsRepository.GetBugs().First(b=>b.id==id);
+        bug.state = "backlog";
+        return bug;
+      }
+
+      [HttpPost("api/bugs/working")]
+      public Bug MoveToWorking([FromBody] int id)
+      {
+        var bug = _bugsRepository.GetBugs().First(b => b.id == id);
+        bug.state = "working";
+        return bug;
+      }
+
+      [HttpPost("api/bugs/done")]
+      public Bug MoveToDone([FromBody] int id)
+      {
+        var bug = _bugsRepository.GetBugs().First(b => b.id == id);
+        bug.state = "done";
+        return bug;
+      }
+    }
 
 В API содержится метод для получения набора багов из репозитория, а также ещё несколько методов для перемещения багов между состояниями.  Гораздо больше информации по ASP.NET Web API можно найти на [asp.net/web-api](http://asp.net/web-api)
 
 Теперь, когда у меня есть контроллер ASP.NET Web API, мне нужно добавить его к своему существующему OWIN-конвееру.  Для этого я просто добавляю следующие строчки в метод Configuration в моём startup class:
 
-```cs
-var config = new HttpConfiguration();
-config.MapHttpAttributeRoutes();
-config.Routes.MapHttpRoute("bugs", "api/{Controller}");
-app.UseWebApi(config);
-```
+    :::csharp
+    var config = new HttpConfiguration();
+    config.MapHttpAttributeRoutes();
+    config.Routes.MapHttpRoute("bugs", "api/{Controller}");
+    app.UseWebApi(config);
 
 Как и в случае с Nancy, пакет OWIN для ASP.NET Web API предоставляет extension method UseWebApi, который способствует простой интеграции ASP.NET Web API в мой существующий OWIN-конвеер.  Теперь он состоит из двух компонентов, ASP.NET Web API и Nancy, как показано ниже:
 
@@ -245,55 +243,53 @@ app.UseWebApi(config);
 
 Для того, чтобы динамически создавать HTML-разметку на клиенте с использованием Knockout, первым делом мне нужно затянуть все баги из ASP.NET Web API и создать viewModel, которую Knockout привяжет к HTML элементам.
 
-```xml
-<script>
-  $(function () {
-    var viewModel;
-    $.getJSON('/api/bugs', function(data) {
-      var model = data;
-      viewModel = {
-        backlog: ko.observableArray(
-          model.filter(function(element) { return element.state === 'backlog'; })),
-        working: ko.observableArray(
-          model.filter(function(element) { return element.state === 'working'; })),
-        done: ko.observableArray(
-          model.filter(function(element) { return element.state === 'done'; })),
-        changeState: function (bug, newState) {
-          var self = this;
-          $.post('/api/bugs/' + newState, { '': bug.id }, function(data){
-            self.moveBug(data);
-          });
-        },
-        moveBug: function (bug) {
-          // Remove the item from one of the existing lists
-          ...
-          // Add bug to correct list
-          this[bug.state].push(bug);
-        }
-      };
-      ko.applyBindings(viewModel);
-    })
-  })
-</script>
-```
+    :::html
+    <script>
+      $(function () {
+        var viewModel;
+        $.getJSON('/api/bugs', function(data) {
+          var model = data;
+          viewModel = {
+            backlog: ko.observableArray(
+              model.filter(function(element) { return element.state === 'backlog'; })),
+            working: ko.observableArray(
+              model.filter(function(element) { return element.state === 'working'; })),
+            done: ko.observableArray(
+              model.filter(function(element) { return element.state === 'done'; })),
+            changeState: function (bug, newState) {
+              var self = this;
+              $.post('/api/bugs/' + newState, { '': bug.id }, function(data){
+                self.moveBug(data);
+              });
+            },
+            moveBug: function (bug) {
+              // Remove the item from one of the existing lists
+              ...
+              // Add bug to correct list
+              this[bug.state].push(bug);
+            }
+          };
+          ko.applyBindings(viewModel);
+        })
+      })
+    </script>
 
 Как только viewModel создана, Knockout может динамически создавать и обновлять содержимое HTML через привязку viewModel к HTML элементам, к которым добавлены специальные атрибуты.  Например, список отложенных багов может быть сгенерирован из viewModel с помощью таких атрибутов:
 
-```xml
-<section>
-  <h2>Backlog</h2>
-  <ul class="bugs" id="backlog" data-bind="foreach:backlog">
-    <li>
-      [<span data-bind="text: id"></span>] <span data-bind="text: title"></span>:
-        <span data-bind="text: description"></span>
-      <ul>
-        <li><a href="#" data-bind="click: $root.changeState.bind($root, $data, 'working')">Move to working</a></li>   
-        <li><a href="#" data-bind="click: $root.changeState.bind($root, $data, 'done')">Move to done</a></li>   
+    :::html
+    <section>
+      <h2>Backlog</h2>
+      <ul class="bugs" id="backlog" data-bind="foreach:backlog">
+        <li>
+          [<span data-bind="text: id"></span>] <span data-bind="text: title"></span>:
+            <span data-bind="text: description"></span>
+          <ul>
+            <li><a href="#" data-bind="click: $root.changeState.bind($root, $data, 'working')">Move to working</a></li>   
+            <li><a href="#" data-bind="click: $root.changeState.bind($root, $data, 'done')">Move to done</a></li>   
+          </ul>
+        </li>
       </ul>
-    </li>
-  </ul>
-</section>
-```
+    </section>
 
 Добавление моментальных оповещений об изменениях
 ------------------------------------------------------
@@ -306,48 +302,43 @@ app.UseWebApi(config);
 
 Я начну с созданию Hub на сервере.  Я не использую никаких других возможностей SignalR и поэтому мой Hub будет состоять всего лишь из такого пустого класа:
 
-```cs
-[HubName("bugs")]
-public class BugHub : Hub
-{
-}
-```
+    :::csharp
+    [HubName("bugs")]
+    public class BugHub : Hub
+    {
+    }
 
 Для того, чтобы что-нибудь послать в Hub из ASP.NET Web API, мне для начала нужно получить экземпляр его runtime context.  Я могу сделать это, добавив следующий код в конструктор BugsController:
 
-```cs
-public BugsController()
-{
-  _hub = GlobalHost.ConnectionManager.GetHubContext<BugHub>();
-}
-```
+    :::csharp
+    public BugsController()
+    {
+      _hub = GlobalHost.ConnectionManager.GetHubContext<BugHub>();
+    }
 
 Затем я могу разослать обновлённый баг ко всем подсоединённым клиентским бразуером из какого-нибудь метода MoveToXX:
 
-```cs
-_hub.Clients.All.moved(bug);
-```
+    :::csharp
+    _hub.Clients.All.moved(bug);
 
 На домашней странице, после добавления нескольких JavaScript библиотек SignalR, я могу подсоединиться к bugsHub и начать ждать сообщений об изменениях:
 
-```cs
-$.connection.hub.logging = true;
-var bugsHub = $.connection.bugs;
-bugsHub.client.moved = function (item) {
-  viewModel.moveBug(item);
-};
-$.connection.hub.start().done(function() {
-  console.log('hub connection open');
-});
-```
+    :::js
+    $.connection.hub.logging = true;
+    var bugsHub = $.connection.bugs;
+    bugsHub.client.moved = function (item) {
+      viewModel.moveBug(item);
+    };
+    $.connection.hub.start().done(function() {
+      console.log('hub connection open');
+    });
 
 Заметьте, что когда я получаю с сервера запрос через функцию moved, я вызываю метод moveBug у viewModel также, как я делал это в обработчике клика на элемент списка.  Разница в том, что все клиентские браузеры могут одновременно обновить свои viewModel, так как этот вызов производится через SignalR.  Вы можете убедиться в этом, открыв два окна браузера.  Изменения, сделанные в одном окне, отобразятся в другом.
 
 Как я говорил, добавление SignalR в OWIN-конвеер тривиально.  Я просто добавляю следующий код в метод Configuration у startup class:
 
-```cs
-app.MapSignalR();
-```
+    :::csharp
+    app.MapSignalR();
 
 Всё это создаёт такой конвеер:
 
@@ -371,9 +362,8 @@ app.MapSignalR();
 
 После того, как пакеты установлены и файлы скопированы, я открываю командную строку, перехожу в корневой каталог веб-проекта и, как это показано ниже, запускаю OwinHost.exe из каталога packages:
 
-```
-..\packages\OwinHost.2.0.0\tools\OwinHost.exe
-```
+    :::bat
+    ..\packages\OwinHost.2.0.0\tools\OwinHost.exe
 
 ![calling OwinHost.exe](http://i.msdn.microsoft.com/dn451439.Dierking_Figure%2012_hires\(en-us,MSDN.10\).png)
 
@@ -400,9 +390,8 @@ _Howard Dierking работает на должности program manager в к�
 **От переводчика**
 В заключение хочу поделиться собственными мыслями по поводу Katana.  В первую очередь меня заинтересовало то, как в Katana используется ASP.NET Identity, новая система аутентификации и авторизации, появившаяся вместе с MVC 5 и остальными октябрьскими релизами в 2013 году.  Identity чертовски просто встраивается в конвеер:
 
-```cs
-appBuilder.UseGoogleAutentification()
-```
+    :::csharp
+    appBuilder.UseGoogleAutentification()
 
 Но есть и подозрительные моменты.  Конечно, сложно спорить с Howard Dierking, управляющим разработкой фреймворков, про которые написано столько книг и статей, что отдельным достижением является прочтение хотя бы половины из них.  Но, с высоты моего скромного опыта, по крайней мере один из аргументов в пользу Katana воспринимается не так однозначно -- возможность собрать все сервисы в одно приложение и деплоить всё сразу.  Ведь известен совершенно противоположный подход -- разделить приложение на отдельные сервисы и получить возможность независимо и постепенно выкладывать обновления на боевую площадку.
 
