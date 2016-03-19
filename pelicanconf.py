@@ -30,6 +30,12 @@ DEFAULT_PAGINATION = 10
 # Uncomment following line if you want document-relative URLs when developing
 RELATIVE_URLS = True
 
-STATIC_PATHS = ['images']
+STATIC_PATHS = ['images', 'js']
 
 THEME = 'theme'
+
+# Plugins
+PLUGIN_PATHS = ['/home/kirill/workplace/pelican-plugins']
+PLUGINS = ['summary']
+
+TYPOGRIFY = True
