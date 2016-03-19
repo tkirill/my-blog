@@ -7,13 +7,13 @@
 <div class="row">
     <div class="col-md-8">
         {% for article in articles_page.object_list %}
-            <div>
+            <div class="article-list-item">
+                <p class="article-list-item-date">
+                    {{ article.locale_date }}
+                </p>
                 <h2>
                     <a href="{{ SITEURL }}/{{ article.url }}" title="Permalink to {{ article.title|striptags }}">{{ article.title }}</a>
                 </h2>
-                <p>
-                    {{ article.locale_date }}
-                </p>
                 <div>
                     {{ article.summary }}
                 </div>

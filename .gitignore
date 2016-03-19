@@ -5,3 +5,4 @@ syntax: globe
 *.pid
 output/
 /apps/binomial/binomial
+.idea/
