@@ -2,11 +2,24 @@ body {
     font-family: Arial, sans-serif;
 }
 
+.pelican-credits{
+    color: #8c8c8c;
+}
+
 .article-list-item {
     margin-bottom: 4rem;
 }
 
 .article-list-item-date {
     margin-bottom: 0.25rem;
-    color: #55595c;
+    color: #8c8c8c;
+}
+
+.article-date {
+    margin-bottom: 0.25rem;
+    color: #8c8c8c;
+}
+
+.article-content img {
+    width: 100%;
 }
